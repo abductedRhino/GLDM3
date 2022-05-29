@@ -346,6 +346,33 @@ public class GRDM_U3 implements PlugIn {
                     }
                 }
             }
+
+            if (method.equals("Sepia")) {
+
+                for (int y=0; y<height; y++) {
+                    for (int x=0; x<width; x++) {
+                        int pos = y*width + x;
+                        int argb = origPixels[pos];  // Lesen der Originalwerte
+
+                        int r = (argb >> 16) & 0xff;
+                        //int g = (argb >>  8) & 0xff;
+                        //int b =  argb        & 0xff;
+
+                        int rn = r;
+                        int gn = 0;
+                        int bn = 0;
+
+
+                        // Hier muessen die neuen RGB-Werte wieder auf den Bereich von 0 bis 255 begrenzt werden
+                        rn = limitRGB(rn);
+                        gn = limitRGB(gn);
+                        bn = limitRGB(bn);
+
+                        pixels[pos] = (0xFF<<24) | (rn<<16) | (gn<<8) | bn;
+                    }
+                }
+            }
+
             if (method.equals("AchtFarben")) {
 
                 for (int y=0; y<height; y++) {
