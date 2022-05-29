@@ -1,5 +1,4 @@
 import ij.IJ;
-import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageCanvas;
@@ -7,20 +6,15 @@ import ij.gui.ImageWindow;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
 import java.awt.Panel;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.Arrays;
 
-import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
-import javax.swing.JPanel;
-import javax.swing.JSlider;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+
+import static java.lang.Math.round;
+import static java.util.Arrays.fill;
 
 /**
  Opens an image window and adds a panel below the image
@@ -32,12 +26,13 @@ public class GRDM_U3 implements PlugIn {
     private int width;
     private int height;
 
-    String[] items = {"Original", "Rot-Kanal", "Graustufen", "Negativ", "Binärbild", "Sepia", "AchtFarben"};
+    String[] items = {"Original", "Rot-Kanal", "Graustufen", "Negativ", "Binärbild", "3-Graustufen",
+            "7-Graustufen", "VertikalerDither", "Sepia", "AchtFarben"};
 
 
     public static void main(String args[]) {
 
-        IJ.open("I:\\GLDM3_3\\src\\Bear.jpg");
+        IJ.open("C:\\Users\\to0o\\GLDM3\\src\\Bear.jpg");
         //IJ.open("Z:/Pictures/Beispielbilder/orchid.jpg");
 
         GRDM_U3 pw = new GRDM_U3();
@@ -196,9 +191,9 @@ public class GRDM_U3 implements PlugIn {
                         double u = (b - luminanz) * 0.493;
                         double v = (r - luminanz) * 0.877;
 
-                        int rn = 255-(int) Math.round(luminanz + v / 0.877);
-                        int bn = 255-(int) Math.round(luminanz + u / 0.493);
-                        int gn = 255-(int) Math.round(1 / 0.587 * luminanz - 0.299 / 0.587 * rn - 0.114 / 0.587 * bn);
+                        int rn = 255-(int) round(luminanz + v / 0.877);
+                        int bn = 255-(int) round(luminanz + u / 0.493);
+                        int gn = 255-(int) round(1 / 0.587 * luminanz - 0.299 / 0.587 * rn - 0.114 / 0.587 * bn);
 
                         // Hier muessen die neuen RGB-Werte wieder auf den Bereich von 0 bis 255 begrenzt werden
                         rn = limitRGB(rn);
@@ -211,6 +206,9 @@ public class GRDM_U3 implements PlugIn {
             }
             if (method.equals("Binärbild")) {
 
+                double[] colors = new double[2];
+                colors = fillArrayWith(colors);
+
                 for (int y=0; y<height; y++) {
                     for (int x=0; x<width; x++) {
                         int pos = y*width + x;
@@ -220,28 +218,135 @@ public class GRDM_U3 implements PlugIn {
                         int g = (argb >>  8) & 0xff;
                         int b =  argb        & 0xff;
 
-                        double luminanz = 0.299 *  r + 0.587 *  g + 0.114 *  b;
-                        double u = (b - luminanz) * 0.493;
-                        double v = (r - luminanz) * 0.877;
+                        int luminint = (int) round(0.299 *  r + 0.587 *  g + 0.114 *  b);
 
-                        int rn = (int) Math.round(luminanz + v / 0.877);
-                        int bn = (int) Math.round(luminanz + u / 0.493);
-                        int gn = (int) Math.round(1 / 0.587 * luminanz - 0.299 / 0.587 * rn - 0.114 / 0.587 * bn);
+
+                        //  luminint dem nächsten der werte zuordnen.
+                        //System.out.print(luminint + "   ");
+                        luminint = closestValue(luminint, colors);
+                        //System.out.println(luminint);
+
+
+
+                        int rn = luminint;
+                        int bn = luminint;
+                        int gn = luminint;
+
+                        // Hier muessen die neuen RGB-Werte wieder auf den Bereich von 0 bis 255 begrenzt werden
+                        pixels[pos] = (0xFF<<24) | (rn<<16) | (gn<<8) | bn;
+                    }
+                }
+            }
+
+            if (method.equals("3-Graustufen")) {
+
+                double[] colors = new double[3];
+                colors = fillArrayWith(colors);
+
+                for (int y=0; y<height; y++) {
+                    for (int x=0; x<width; x++) {
+                        int pos = y*width + x;
+                        int argb = origPixels[pos];  // Lesen der Originalwerte
+
+                        int r = (argb >> 16) & 0xff;
+                        int g = (argb >>  8) & 0xff;
+                        int b =  argb        & 0xff;
+
+                        int luminint = (int) round(0.299 *  r + 0.587 *  g + 0.114 *  b);
+
+
+                        //  luminint dem nächsten der werte zuordnen.
+                        //System.out.print(luminint + "   ");
+                        luminint = closestValue(luminint, colors);
+                        //System.out.println(luminint);
+
+
+
+                        int rn = luminint;
+                        int bn = luminint;
+                        int gn = luminint;
+
+                        // Hier muessen die neuen RGB-Werte wieder auf den Bereich von 0 bis 255 begrenzt werden
+                        pixels[pos] = (0xFF<<24) | (rn<<16) | (gn<<8) | bn;
+                    }
+                }
+            }
+
+            if (method.equals("7-Graustufen")) {
+
+                double[] colors = new double[7];
+                colors = fillArrayWith(colors);
+
+                for (int y=0; y<height; y++) {
+                    for (int x=0; x<width; x++) {
+                        int pos = y*width + x;
+                        int argb = origPixels[pos];  // Lesen der Originalwerte
+
+                        int r = (argb >> 16) & 0xff;
+                        int g = (argb >>  8) & 0xff;
+                        int b =  argb        & 0xff;
+
+                        int luminint = (int) round(0.299 *  r + 0.587 *  g + 0.114 *  b);
+
+                        //  luminint dem nächsten der werte zuordnen.
+                        //System.out.print(luminint + "   ");
+                        luminint = closestValue(luminint, colors);
+                        //System.out.println(luminint);
+
+
+
+                        int rn = luminint;
+                        int bn = luminint;
+                        int gn = luminint;
+
+                        // Hier muessen die neuen RGB-Werte wieder auf den Bereich von 0 bis 255 begrenzt werden
+                        pixels[pos] = (0xFF<<24) | (rn<<16) | (gn<<8) | bn;
+                    }
+                }
+            }
+
+            if (method.equals("VertikalerDither")) {
+
+                int[] lastLine = new int[width];
+                fill(lastLine, 0);
+
+                for (int y=0; y<height; y++) {
+                    for (int x=0; x<width; x++) {
+                        int pos = y * width + x;
+                        int argb = origPixels[pos];  // Lesen der Originalwerte
+
+                        int r = (argb >> 16) & 0xff;
+                        int g = (argb >> 8) & 0xff;
+                        int b = argb & 0xff;
+
+                        double luminanz = 0.299 * r + 0.587 * g + 0.114 * b;
+                        int luminint = (int)round(luminanz);
+
+                        int q = luminint - lastLine[x];
+                        lastLine[x] = luminint - q;
+                        if (q < 128) {
+                            luminint = 0;
+                        } else {
+                            luminint = 255;
+                        }
+
+
+                        int rn = luminint;
+                        int bn = luminint;
+                        int gn = luminint;
+
+
 
                         // Hier muessen die neuen RGB-Werte wieder auf den Bereich von 0 bis 255 begrenzt werden
                         rn = limitRGB(rn);
                         gn = limitRGB(gn);
                         bn = limitRGB(bn);
 
-                        pixels[pos] = (0xFF<<24) | (rn<<16) | (gn<<8) | bn;
+                        pixels[pos] = (0xFF << 24) | (rn << 16) | (gn << 8) | bn;
                     }
                 }
             }
-
-
-
         }
-
         private int limitRGB(int RGB) {
             if (RGB > 255) {
                 RGB = 255;
@@ -251,7 +356,25 @@ public class GRDM_U3 implements PlugIn {
             }
             return RGB;
         }
+        private double[] fillArrayWith(double[] colors) {
+            for (int i = 0; i < colors.length; i++) {
+                colors[i] = (255 / ((double)colors.length - 1)) * i;
 
-
+            }
+            System.out.println(Arrays.toString(colors));
+            return colors;
+        }
+        private int closestValue(int num, double[] numbers) {
+            int ret = 0;
+            double closest = Integer.MAX_VALUE;
+            for (int i = 0; i < numbers.length; i++) {
+                double distance = (Math.max(numbers[i], num)) - (Math.min(numbers[i], num));
+                if (distance < closest) {
+                    closest = distance;
+                    ret = (int) Math.round(numbers[i]);
+                }
+            }
+            return ret;
+        }
     } // CustomWindow inner class
 }
