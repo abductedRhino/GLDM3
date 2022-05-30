@@ -33,7 +33,7 @@ public class GRDM_U3 implements PlugIn {
     public static void main(String args[]) {
 
         IJ.open("C:\\Users\\natha\\OneDrive\\Documents\\HTW GDM SS 2022\\Uebungen\\GLDM3\\src\\Bear.jpg");
-        //IJ.open("Z:/Pictures/Beispielbilder/orchid.jpg");
+        IJ.open("C:\\Users\\to0o\\GLDM3\\src\\Bear.jpg");
 
         GRDM_U3 pw = new GRDM_U3();
         pw.imp = IJ.getImage();
@@ -235,7 +235,6 @@ public class GRDM_U3 implements PlugIn {
                     }
                 }
             }
-
             if (method.equals("3-Graustufen")) {
 
                 double[] colors = new double[3];
@@ -269,7 +268,6 @@ public class GRDM_U3 implements PlugIn {
                     }
                 }
             }
-
             if (method.equals("7-Graustufen")) {
 
                 double[] colors = new double[7];
@@ -302,7 +300,6 @@ public class GRDM_U3 implements PlugIn {
                     }
                 }
             }
-
             if (method.equals("VertikalerDither")) {
 
                 int[] lastLine = new int[width];
