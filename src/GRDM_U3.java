@@ -32,8 +32,8 @@ public class GRDM_U3 implements PlugIn {
 
     public static void main(String args[]) {
 
+        IJ.open("C:\\Users\\natha\\OneDrive\\Documents\\HTW GDM SS 2022\\Uebungen\\GLDM3\\src\\Bear.jpg");
         IJ.open("C:\\Users\\to0o\\GLDM3\\src\\Bear.jpg");
-        //IJ.open("Z:/Pictures/Beispielbilder/orchid.jpg");
 
         GRDM_U3 pw = new GRDM_U3();
         pw.imp = IJ.getImage();
@@ -160,8 +160,6 @@ public class GRDM_U3 implements PlugIn {
                         int b =  argb        & 0xff;
 
                         double luminanz = 0.299 *  r + 0.587 *  g + 0.114 *  b;
-                        double u = 0;
-                        double v = 0;
 
                         int rn = (int) luminanz;
                         int bn = (int) luminanz;
@@ -237,7 +235,6 @@ public class GRDM_U3 implements PlugIn {
                     }
                 }
             }
-
             if (method.equals("3-Graustufen")) {
 
                 double[] colors = new double[3];
@@ -271,7 +268,6 @@ public class GRDM_U3 implements PlugIn {
                     }
                 }
             }
-
             if (method.equals("7-Graustufen")) {
 
                 double[] colors = new double[7];
@@ -304,8 +300,78 @@ public class GRDM_U3 implements PlugIn {
                     }
                 }
             }
-        }
+            if (method.equals("VertikalerDither")) {
 
+                int[] lastLine = new int[width];
+                fill(lastLine, 0);
+
+                for (int y=0; y<height; y++) {
+                    for (int x=0; x<width; x++) {
+                        int pos = y * width + x;
+                        int argb = origPixels[pos];  // Lesen der Originalwerte
+
+                        int r = (argb >> 16) & 0xff;
+                        int g = (argb >> 8) & 0xff;
+                        int b = argb & 0xff;
+
+                        double luminanz = 0.299 * r + 0.587 * g + 0.114 * b;
+                        int luminint = (int)round(luminanz);
+
+                        int displayColor = luminint + lastLine[x];
+
+                        if (displayColor < 128) {
+                            luminint = 0;
+                            lastLine[x] = displayColor - 0;
+                        } else {
+                            luminint = 255;
+                            lastLine[x] = displayColor - 255;
+                        }
+
+                        int rn = luminint;
+                        int bn = luminint;
+                        int gn = luminint;
+
+
+
+                        // Hier muessen die neuen RGB-Werte wieder auf den Bereich von 0 bis 255 begrenzt werden
+                        rn = limitRGB(rn);
+                        gn = limitRGB(gn);
+                        bn = limitRGB(bn);
+
+                        pixels[pos] = (0xFF << 24) | (rn << 16) | (gn << 8) | bn;
+                    }
+                }
+            }
+            if (method.equals("Sepia")) {
+
+                for (int y=0; y<height; y++) {
+                    for (int x=0; x<width; x++) {
+                        int pos = y*width + x;
+                        int argb = origPixels[pos];  // Lesen der Originalwerte
+
+                        int r = (argb >> 16) & 0xff;
+                        int g = (argb >>  8) & 0xff;
+                        int b =  argb        & 0xff;
+
+                        double luminanz = 0.299 *  r + 0.587 *  g + 0.114 *  b;
+                        double u = (b - luminanz) * 0.493;
+                        double v = (r - luminanz) * 0.877;
+
+                        int rn = (int) (luminanz*1.3);
+                        int bn = (int) (luminanz*0.8);
+                        int gn = (int) (luminanz*1.2);
+
+
+                        // Hier muessen die neuen RGB-Werte wieder auf den Bereich von 0 bis 255 begrenzt werden
+                        rn = limitRGB(rn);
+                        gn = limitRGB(gn);
+                        bn = limitRGB(bn);
+
+                        pixels[pos] = (0xFF<<24) | (rn<<16) | (gn<<8) | bn;
+                    }
+                }
+            }
+        }
         private int limitRGB(int RGB) {
             if (RGB > 255) {
                 RGB = 255;
